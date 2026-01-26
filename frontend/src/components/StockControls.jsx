@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
 import MarketStockPicker from "./MarketStockPicker";
+import TimeRangePills from "./TimeRangePills";
 import IndicatorPanel from "./IndicatorPanel";
 
 export default function StockControls({
@@ -7,93 +7,71 @@ export default function StockControls({
     setMarket,
     symbol,
     setSymbol,
-    indicators,
-    setIndicators,
+    days,
+    setDays,
 }) {
-    const [regex, setRegex] = useState(false);
-    const [foundCount, setFoundCount] = useState(0);
-
-    const currency = useMemo(() => (market === "India" ? "INR" : "USD"), [market]);
+    const onMarketChange = (m) => {
+        setMarket(m);
+        setSymbol(""); // reset so picker auto-selects valid symbol
+    };
 
     return (
-        <div className="controlsWrap">
-            <div className="controlsHeader">
-                <div>
-                    <div className="title">Stock Controls</div>
-                    <div className="subtitle">Pick market → select stock → choose indicators</div>
-                </div>
-                <div className="pill">{currency}</div>
+        <div
+            style={{
+                padding: 16,
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(0,0,0,0.22)",
+                backdropFilter: "blur(10px)",
+            }}
+        >
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
+                Stock Controls
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 12 }}>
+                Pick market → select stock → choose indicators
             </div>
 
-            <div className="segmented">
+            <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                 <button
-                    className={`segBtn ${market === "US" ? "active" : ""}`}
-                    onClick={() => setMarket("US")}
                     type="button"
+                    onClick={() => onMarketChange("US")}
+                    style={{
+                        padding: "8px 12px",
+                        borderRadius: 999,
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        background: market === "US" ? "rgba(251,191,36,0.18)" : "rgba(0,0,0,0.2)",
+                        color: "white",
+                        cursor: "pointer",
+                    }}
                 >
                     US
                 </button>
                 <button
-                    className={`segBtn ${market === "India" ? "active" : ""}`}
-                    onClick={() => setMarket("India")}
                     type="button"
+                    onClick={() => onMarketChange("India")}
+                    style={{
+                        padding: "8px 12px",
+                        borderRadius: 999,
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        background: market === "India" ? "rgba(251,191,36,0.18)" : "rgba(0,0,0,0.2)",
+                        color: "white",
+                        cursor: "pointer",
+                    }}
                 >
                     India
                 </button>
-
-                <div className="miniToggle" title="Use regex for search">
-                    <input
-                        type="checkbox"
-                        checked={regex}
-                        onChange={(e) => setRegex(e.target.checked)}
-                    />
-                    Regex
-                </div>
             </div>
 
-            {/* ✅ Search + Select fixed */}
-            <MarketStockPicker
-                market={market}
-                symbol={symbol}
-                setSymbol={setSymbol}
-                regex={regex}
-                onFoundCount={setFoundCount}
-            />
+            <MarketStockPicker market={market} value={symbol} onChange={setSymbol} limit={10000} />
 
-            {/* small chip: found */}
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <div className="chip">{foundCount} found</div>
+            <div style={{ marginTop: 14, marginBottom: 10, fontSize: 12, opacity: 0.8 }}>
+                Range
             </div>
+            <TimeRangePills range={days} setRange={setDays} />
 
-            <div className="twoCards">
-                {/* ✅ Indicators panel with editable periods */}
-                <IndicatorPanel indicators={indicators} setIndicators={setIndicators} />
-
-                {/* Fundamentals placeholder (kept same look) */}
-                <div className="cardInner">
-                    <div className="cardTitleRow">
-                        <div>
-                            <div className="cardTitle">Fundamental Indicators</div>
-                            <div className="cardHint">Powered by fundamentals API (coming soon).</div>
-                        </div>
-                    </div>
-
-                    <div className="soonList">
-                        {[
-                            "Revenue Growth (10Y)",
-                            "EPS Growth (10Y)",
-                            "ROE %",
-                            "Debt/Equity",
-                            "Free Cash Flow (10Y)",
-                            "Operating Margin",
-                        ].map((t) => (
-                            <div className="soonItem" key={t}>
-                                <div className="muted">{t}</div>
-                                <div className="soonPill">Soon</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div style={{ marginTop: 16 }}>
+                <IndicatorPanel />
             </div>
         </div>
     );

@@ -3,7 +3,8 @@
     "private": true,
     "scripts": {
         "dev": "node scripts/dev.mjs",
-        "dev:fast": "node scripts/dev.mjs --fast"
+        "dev:fast": "node scripts/dev.mjs --fast",
+        "start": "node scripts/dev.mjs --fast"
     },
     "devDependencies": {
         "concurrently": "^9.0.0"
