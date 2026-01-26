@@ -67,8 +67,9 @@ jobs:
 
       # 3) Run refresh (THIS must update DB content)
       - name: Refresh DB data
+        working-directory: backend
         run: |
-          python backend/app/run_universe_and_refresh.py
+            python -m app.run_universe_and_refresh
 
       # 4) Create a marker file so you can verify refresh quickly
       - name: Create refresh_status.json
