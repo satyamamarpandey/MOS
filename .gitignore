@@ -1,0 +1,14 @@
+# DB files (store in R2, not git)
+backend/data/*.db
+backend/data/*.db-*
+backend/data/*.db.gz
+
+# Python cache
+**/__pycache__/
+*.pyc
+.env
+backend/.env
+
+# Node
+frontend/node_modules/
+node_modules/
