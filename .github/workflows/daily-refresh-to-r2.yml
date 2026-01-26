@@ -1,8 +1,9 @@
 name: Daily refresh and upload DBs to R2
 
 on:
+  # GitHub cron is UTC-only. We run hourly and gate to 7:00 PM America/New_York
   schedule:
-    - cron: "30 2 * * *"   # daily 02:30 UTC
+    - cron: "0 * * * *"
   workflow_dispatch: {}
 
 concurrency:
@@ -25,6 +26,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Gate execution to exactly 7:00 PM US/Eastern (handles DST automatically)
+      - name: Run only at 7 PM US/Eastern
+        shell: bash
+        run: |
+          set -e
+          echo "NY time now: $(TZ="America/New_York" date)"
+
+          NOW_HH=$(TZ="America/New_York" date +%H)
+          NOW_MM=$(TZ="America/New_York" date +%M)
+
+          if [[ "$NOW_HH" != "19" || "$NOW_MM" != "00" ]]; then
+            echo "Not 7:00 PM ET — skipping."
+            exit 0
+          fi
+
+          echo "It's 7:00 PM ET — continuing."
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -41,11 +59,27 @@ jobs:
         run: |
           mkdir -p backend/data
 
-      # 1) Download latest snapshots from R2
+      # 1) Download baseline DB snapshots from R2 (prefer latest/, fallback to root)
       - name: Download DB snapshots from R2
+        shell: bash
         run: |
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp "s3://$R2_BUCKET/snapshots/stockapp-in.db.gz" backend/data/stockapp-in.db.gz --no-progress
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp "s3://$R2_BUCKET/snapshots/stockapp-us.db.gz" backend/data/stockapp-us.db.gz --no-progress
+          set -e
+
+          # Try latest/ first
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" \
+            backend/data/stockapp-in.db.gz --no-progress || \
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/stockapp-in.db.gz" \
+            backend/data/stockapp-in.db.gz --no-progress
+
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" \
+            backend/data/stockapp-us.db.gz --no-progress || \
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/stockapp-us.db.gz" \
+            backend/data/stockapp-us.db.gz --no-progress
+
           ls -lh backend/data
 
       # 2) Decompress into .db
@@ -65,19 +99,19 @@ jobs:
             print("Wrote", dst, "size=", os.path.getsize(dst))
           PY
 
-      # 3.0) Debug Step
+      # 3.0) Debug Step (keep if you want; safe to remove later)
       - name: Debug help
         working-directory: backend
         run: |
-            python -m app.run_universe_and_refresh --help
+          python -m app.run_universe_and_refresh --help
 
-      # 3) Run refresh (THIS must update DB content)
+      # 3) Refresh DB data (arg order matters: --market before subcommand)
       - name: Refresh DB data
         working-directory: backend
         run: |
-            python -m app.run_universe_and_refresh --market ALL daily
+          python -m app.run_universe_and_refresh --market ALL daily
 
-      # 4) Create a marker file so you can verify refresh quickly
+      # 4) Create refresh_status.json
       - name: Create refresh_status.json
         run: |
           python - <<'PY'
@@ -92,7 +126,12 @@ jobs:
               "SELECT COUNT(*) FROM daily_bars WHERE date=? AND close IS NOT NULL", (mx,)
             ).fetchone()[0]
             con.close()
-            return {"db": os.path.basename(path), "rows": rows, "max_date": mx, "rows_on_max_date_with_close": latest_rows}
+            return {
+              "db": os.path.basename(path),
+              "rows": rows,
+              "max_date": mx,
+              "rows_on_max_date_with_close": latest_rows,
+            }
 
           out = {
             "ran_at_utc": datetime.datetime.utcnow().isoformat() + "Z",
@@ -121,19 +160,43 @@ jobs:
             print("Wrote", dst, "size=", os.path.getsize(dst))
           PY
 
-      # 6) Upload back to R2 (overwrite same keys)
-      - name: Upload updated snapshots + status to R2
+      # 6) Keep ONLY Day-1 history + update latest
+      - name: Upload updated snapshots + keep only Day-1 history
+        shell: bash
         run: |
-            TS=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+          set -euo pipefail
 
-            # latest (overwrite)
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" --no-progress
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" --no-progress
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/refresh_status.json "s3://$R2_BUCKET/snapshots/latest/refresh_status.json" --no-progress
+          # Timestamp format for history filenames:
+          # 2026-01-26T04-06-00Z-stockapp-in.db.gz
+          TS=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 
-            # dated (history)
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-in.db.gz" --no-progress
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-us.db.gz" --no-progress
+          # A) Delete any existing history objects so history ends up with ONLY 2 objects total
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 rm "s3://$R2_BUCKET/snapshots/history/" --recursive || true
 
-            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/latest/"
+          # B) Copy yesterday's latest into history (Day-1). If latest doesn't exist (first run), ignore errors.
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" \
+            "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-in.db.gz" --no-progress || true
 
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" \
+            "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-us.db.gz" --no-progress || true
+
+          # C) Upload today's refreshed files to latest (overwrite)
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            backend/data/stockapp-in.db.gz \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" --no-progress
+
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            backend/data/stockapp-us.db.gz \
+            "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" --no-progress
+
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            backend/refresh_status.json \
+            "s3://$R2_BUCKET/snapshots/latest/refresh_status.json" --no-progress
+
+          echo "=== latest/ ==="
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/latest/"
+
+          echo "=== history/ (should contain ONLY 2 objects) ==="
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/history/"
