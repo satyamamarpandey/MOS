@@ -1,0 +1,123 @@
+name: Daily refresh and upload DBs to R2
+
+on:
+  schedule:
+    - cron: "30 2 * * *"   # daily 02:30 UTC
+  workflow_dispatch: {}
+
+concurrency:
+  group: daily-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install awscli
+
+      - name: Prepare folders
+        run: |
+          mkdir -p backend/data
+
+      # 1) Download latest snapshots from R2
+      - name: Download DB snapshots from R2
+        run: |
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp "s3://$R2_BUCKET/snapshots/stockapp-in.db.gz" backend/data/stockapp-in.db.gz --no-progress
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp "s3://$R2_BUCKET/snapshots/stockapp-us.db.gz" backend/data/stockapp-us.db.gz --no-progress
+          ls -lh backend/data
+
+      # 2) Decompress into .db
+      - name: Decompress DBs
+        run: |
+          python - <<'PY'
+          import gzip, shutil, os
+          pairs = [
+            ("backend/data/stockapp-in.db.gz", "backend/data/stockapp-in.db"),
+            ("backend/data/stockapp-us.db.gz", "backend/data/stockapp-us.db"),
+          ]
+          for src, dst in pairs:
+            if not os.path.exists(src):
+              raise SystemExit(f"Missing {src}")
+            with gzip.open(src, "rb") as fin, open(dst, "wb") as fout:
+              shutil.copyfileobj(fin, fout)
+            print("Wrote", dst, "size=", os.path.getsize(dst))
+          PY
+
+      # 3) Run refresh (THIS must update DB content)
+      - name: Refresh DB data
+        run: |
+          python backend/app/run_universe_and_refresh.py
+
+      # 4) Create a marker file so you can verify refresh quickly
+      - name: Create refresh_status.json
+        run: |
+          python - <<'PY'
+          import sqlite3, json, os, datetime
+
+          def stats(path):
+            con = sqlite3.connect(path)
+            cur = con.cursor()
+            mx = cur.execute("SELECT MAX(date) FROM daily_bars").fetchone()[0]
+            rows = cur.execute("SELECT COUNT(*) FROM daily_bars").fetchone()[0]
+            latest_rows = cur.execute(
+              "SELECT COUNT(*) FROM daily_bars WHERE date=? AND close IS NOT NULL", (mx,)
+            ).fetchone()[0]
+            con.close()
+            return {"db": os.path.basename(path), "rows": rows, "max_date": mx, "rows_on_max_date_with_close": latest_rows}
+
+          out = {
+            "ran_at_utc": datetime.datetime.utcnow().isoformat() + "Z",
+            "india": stats("backend/data/stockapp-in.db"),
+            "us": stats("backend/data/stockapp-us.db"),
+          }
+
+          with open("backend/refresh_status.json", "w") as f:
+            json.dump(out, f, indent=2)
+
+          print(json.dumps(out, indent=2))
+          PY
+
+      # 5) Compress updated DBs back to .gz
+      - name: Compress DBs
+        run: |
+          python - <<'PY'
+          import gzip, shutil, os
+          pairs = [
+            ("backend/data/stockapp-in.db", "backend/data/stockapp-in.db.gz"),
+            ("backend/data/stockapp-us.db", "backend/data/stockapp-us.db.gz"),
+          ]
+          for src, dst in pairs:
+            with open(src, "rb") as fin, gzip.open(dst, "wb", compresslevel=6) as fout:
+              shutil.copyfileobj(fin, fout)
+            print("Wrote", dst, "size=", os.path.getsize(dst))
+          PY
+
+      # 6) Upload back to R2 (overwrite same keys)
+      - name: Upload updated snapshots + status to R2
+        run: |
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/stockapp-in.db.gz" --no-progress
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/stockapp-us.db.gz" --no-progress
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/refresh_status.json "s3://$R2_BUCKET/snapshots/refresh_status.json" --no-progress
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/"

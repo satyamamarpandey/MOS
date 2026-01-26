@@ -1,11 +1,14 @@
 # DB files (store in R2, not git)
 backend/data/*.db
-backend/data/*.db-*
 backend/data/*.db.gz
+backend/*.db
+backend/*.db.gz
 
 # Python cache
 **/__pycache__/
 *.pyc
+
+# secrets
 .env
 backend/.env
 
