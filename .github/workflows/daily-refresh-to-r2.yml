@@ -69,7 +69,8 @@ jobs:
       - name: Refresh DB data
         working-directory: backend
         run: |
-            python -m app.run_universe_and_refresh
+            python -m app.run_universe_and_refresh daily --market ALL
+
 
       # 4) Create a marker file so you can verify refresh quickly
       - name: Create refresh_status.json
@@ -118,7 +119,16 @@ jobs:
       # 6) Upload back to R2 (overwrite same keys)
       - name: Upload updated snapshots + status to R2
         run: |
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/stockapp-in.db.gz" --no-progress
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/stockapp-us.db.gz" --no-progress
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/refresh_status.json "s3://$R2_BUCKET/snapshots/refresh_status.json" --no-progress
-          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/"
+            TS=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+
+            # latest (overwrite)
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" --no-progress
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" --no-progress
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/refresh_status.json "s3://$R2_BUCKET/snapshots/latest/refresh_status.json" --no-progress
+
+            # dated (history)
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-in.db.gz "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-in.db.gz" --no-progress
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp backend/data/stockapp-us.db.gz "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-us.db.gz" --no-progress
+
+            python -m awscli --endpoint-url "$R2_ENDPOINT" s3 ls "s3://$R2_BUCKET/snapshots/latest/"
+
