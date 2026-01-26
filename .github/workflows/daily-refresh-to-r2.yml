@@ -65,12 +65,17 @@ jobs:
             print("Wrote", dst, "size=", os.path.getsize(dst))
           PY
 
+      # 3.0) Debug Step
+      - name: Debug help
+        working-directory: backend
+        run: |
+            python -m app.run_universe_and_refresh --help
+
       # 3) Run refresh (THIS must update DB content)
       - name: Refresh DB data
         working-directory: backend
         run: |
-            python -m app.run_universe_and_refresh daily --market ALL
-
+            python -m app.run_universe_and_refresh --market ALL daily
 
       # 4) Create a marker file so you can verify refresh quickly
       - name: Create refresh_status.json
