@@ -71,3 +71,16 @@ def get_db_market(market: str = Query(default="US")):
         yield db
     finally:
         db.close()
+
+def get_session_by_market(market: str):
+    """
+    CLI/script helper (non-FastAPI):
+    Returns a Session() bound to the requested market DB.
+    """
+    m = (market or "US").strip().upper()
+
+    if m in {"INDIA", "IN", "IND", "NSE"}:
+        return SessionIN()
+
+    # default US
+    return SessionUS()
