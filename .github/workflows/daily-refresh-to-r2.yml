@@ -1,11 +1,8 @@
-# Schedule
-
 name: Daily refresh and upload DBs to R2
 
 on:
-  # GitHub cron is UTC-only. We run hourly and gate to 7:00 PM America/New_York
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 0 * * *"   # 00:00 UTC daily = 7:00 PM EST (8 PM EDT in summer)
   workflow_dispatch: {}
 
 concurrency:
@@ -28,36 +25,62 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Gate execution to exactly 7:00 PM US/Eastern (handles DST automatically)
-      - name: Run only at 7 P
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "NY time now: $(TZ="America/New_York" date)"
-
-          NOW_HH=$(TZ="America/New_York" date +%H)
-          NOW_MM=$(TZ="America/New_York" date +%M)
-          NOW_MM=$((10#$NOW_MM))
-
-          in_7pm_window=false
-          in_10pm_window=false
-
-          # 7:00–7:30 PM ET
-          if [[ "$NOW_HH" == "19" && "$NOW_MM" -le "30" ]]; then
-            in_7pm_window=true
-          fi
-
-          if [[ "$in_7pm_window" != "true" ]]; then
-            echo "Outside 7–7:30 PM ET window — skipping."
-            exit 0
-          fi
-
-          echo "Within allowed window — continuing."
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install awscli
+        run: |
+          python -m pip install --upgrade pip
+          pip install awscli
+
+      # Gate: allow only 00:00–00:59 UTC (buffer for delayed start)
+      # Also run only once per UTC day (best-effort via refresh_status.json)
+      - name: Gate to 7–8 PM EST (buffered)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "UTC now: $(date -u)"
+
+          NOW_UTC_HH=$(date -u +%H)
+
+          if [[ "$NOW_UTC_HH" != "00" ]]; then
+            echo "Outside 00:00–01:00 UTC window — skipping."
+            exit 0
+          fi
+
+          mkdir -p /tmp/r2check
+          set +e
+          python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
+            "s3://$R2_BUCKET/snapshots/latest/refresh_status.json" \
+            "/tmp/r2check/refresh_status.json" --no-progress
+          RC=$?
+          set -e
+
+          if [[ $RC -eq 0 ]]; then
+            LAST_UTC=$(python - <<'PY'
+          import json
+          with open("/tmp/r2check/refresh_status.json","r") as f:
+              d=json.load(f)
+          print(d.get("ran_at_utc",""))
+          PY
+            )
+
+            if [[ -n "$LAST_UTC" ]]; then
+              TODAY_UTC=$(date -u +%Y-%m-%d)
+              LASTDAY_UTC=$(date -u -d "$LAST_UTC" +%Y-%m-%d 2>/dev/null || true)
+
+              if [[ -n "$LASTDAY_UTC" && "$LASTDAY_UTC" == "$TODAY_UTC" ]]; then
+                echo "Already ran today (UTC date: $TODAY_UTC) — skipping."
+                exit 0
+              fi
+            fi
+          else
+            echo "No prior refresh_status.json found (first run or missing) — continuing."
+          fi
+
+          echo "Within allowed window and not yet run today — continuing."
 
       - name: Install deps
         working-directory: backend
@@ -70,13 +93,11 @@ jobs:
         run: |
           mkdir -p backend/data
 
-      # 1) Download baseline DB snapshots from R2 (prefer latest/, fallback to root)
       - name: Download DB snapshots from R2
         shell: bash
         run: |
           set -e
 
-          # Try latest/ first
           python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
             "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" \
             backend/data/stockapp-in.db.gz --no-progress || \
@@ -93,7 +114,6 @@ jobs:
 
           ls -lh backend/data
 
-      # 2) Decompress into .db
       - name: Decompress DBs
         run: |
           python - <<'PY'
@@ -110,19 +130,16 @@ jobs:
             print("Wrote", dst, "size=", os.path.getsize(dst))
           PY
 
-      # 3.0) Debug Step (keep if you want; safe to remove later)
       - name: Debug help
         working-directory: backend
         run: |
           python -m app.run_universe_and_refresh --help
 
-      # 3) Refresh DB data (arg order matters: --market before subcommand)
       - name: Refresh DB data
         working-directory: backend
         run: |
           python -m app.run_universe_and_refresh --market ALL daily
 
-      # 4) Create refresh_status.json
       - name: Create refresh_status.json
         run: |
           python - <<'PY'
@@ -156,7 +173,6 @@ jobs:
           print(json.dumps(out, indent=2))
           PY
 
-      # 5) Compress updated DBs back to .gz
       - name: Compress DBs
         run: |
           python - <<'PY'
@@ -171,20 +187,15 @@ jobs:
             print("Wrote", dst, "size=", os.path.getsize(dst))
           PY
 
-      # 6) Keep ONLY Day-1 history + update latest
       - name: Upload updated snapshots + keep only Day-1 history
         shell: bash
         run: |
           set -euo pipefail
 
-          # Timestamp format for history filenames:
-          # 2026-01-26T04-06-00Z-stockapp-in.db.gz
           TS=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
 
-          # A) Delete any existing history objects so history ends up with ONLY 2 objects total
           python -m awscli --endpoint-url "$R2_ENDPOINT" s3 rm "s3://$R2_BUCKET/snapshots/history/" --recursive || true
 
-          # B) Copy yesterday's latest into history (Day-1). If latest doesn't exist (first run), ignore errors.
           python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
             "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" \
             "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-in.db.gz" --no-progress || true
@@ -193,7 +204,6 @@ jobs:
             "s3://$R2_BUCKET/snapshots/latest/stockapp-us.db.gz" \
             "s3://$R2_BUCKET/snapshots/history/$TS-stockapp-us.db.gz" --no-progress || true
 
-          # C) Upload today's refreshed files to latest (overwrite)
           python -m awscli --endpoint-url "$R2_ENDPOINT" s3 cp \
             backend/data/stockapp-in.db.gz \
             "s3://$R2_BUCKET/snapshots/latest/stockapp-in.db.gz" --no-progress
