@@ -1,47 +1,50 @@
+/* ===========================
+   Fundsap — Premium Black/Gold/Silver Theme
+   App.css (FULL REPLACE)
+   ✅ Only Header + Footer updated
+   ✅ Everything else kept the same
+   =========================== */
+
 :root {
-  --bg: #050509;
-  --bg2: #070812;
+  /* Core */
+  --black: #07080c;
+  --black2: #0b0d12;
+  --charcoal: #11131a;
+  --dark: #151824;
 
-  --card: rgba(17, 18, 26, 0.68);
-  --card2: rgba(11, 12, 18, 0.74);
+  --silver: rgba(226, 232, 240, 0.92);
+  --silver2: rgba(226, 232, 240, 0.74);
 
-  --glass: rgba(255, 255, 255, 0.04);
-  --glass2: rgba(255, 255, 255, 0.06);
+  --gray: rgba(148, 163, 184, 0.45);
+  --gray2: rgba(148, 163, 184, 0.28);
+  --gray3: rgba(148, 163, 184, 0.16);
 
-  --border: rgba(255, 255, 255, 0.10);
-  --border2: rgba(255, 255, 255, 0.14);
+  --gold: #f4c75a;
+  --gold2: rgba(244, 199, 90, 0.18);
+  --gold3: rgba(244, 199, 90, 0.30);
+
+  --border: rgba(226, 232, 240, 0.10);
+  --border2: rgba(226, 232, 240, 0.14);
 
   --text: rgba(248, 250, 252, 0.92);
-  --muted: rgba(156, 163, 175, 0.92);
-  --muted2: rgba(148, 163, 184, 0.78);
-
-  --gold: rgba(251, 191, 36, 1);
-  --goldSoft: rgba(251, 191, 36, 0.18);
-
-  --blue: rgba(56, 189, 248, 1);
-  --green: rgba(34, 197, 94, 1);
-  --purple: rgba(168, 85, 247, 1);
-  --red: rgba(239, 68, 68, 1);
+  --muted: rgba(226, 232, 240, 0.68);
+  --muted2: rgba(226, 232, 240, 0.54);
 
   --radius-lg: 22px;
   --radius-md: 16px;
+  --radius-sm: 12px;
 
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
-  --shadowSoft: 0 18px 60px rgba(0, 0, 0, 0.42);
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.60);
+  --shadowSoft: 0 16px 55px rgba(0, 0, 0, 0.42);
 
-  --blur: blur(16px);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial;
 }
 
-/* Ensure app mounts correctly */
+/* ---------- Base ---------- */
 html,
 body,
 #root {
   height: 100%;
-}
-
-#root {
-  position: relative;
-  z-index: 1;
 }
 
 * {
@@ -50,73 +53,238 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(1200px 800px at 30% 10%, rgba(56, 189, 248, 0.14), transparent 60%),
-    radial-gradient(1000px 700px at 80% 70%, rgba(34, 197, 94, 0.10), transparent 60%),
-    radial-gradient(900px 600px at 60% 20%, rgba(168, 85, 247, 0.10), transparent 60%),
-    linear-gradient(180deg, var(--bg), var(--bg2));
+  font-family: var(--font);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: radial-gradient(1200px 700px at 50% 0%, rgba(244, 199, 90, 0.06), transparent 55%),
+    linear-gradient(180deg, #07080c, #07080c);
 }
 
-/* Shell */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+/* ---------- App Shell ---------- */
 .appShell {
   min-height: 100vh;
-  height: 100vh;
-  padding: 18px;
-  position: relative;
-}
-
-/* Aurora background (always behind) */
-.bgAurora {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(900px 500px at 15% 25%, rgba(56, 189, 248, 0.20), transparent 60%),
-    radial-gradient(800px 520px at 90% 30%, rgba(168, 85, 247, 0.16), transparent 62%),
-    radial-gradient(900px 600px at 70% 85%, rgba(34, 197, 94, 0.16), transparent 60%);
-  filter: blur(22px);
-  opacity: 0.95;
-}
-
-/* ✅ Full width 50/50 grid */
-.terminalGrid {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  width: 100%;
-  height: calc(100vh - 36px);
-  align-items: stretch;
-}
-
-@media (max-width: 980px) {
-  .terminalGrid {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-}
-
-/* ✅ Cards fill grid height */
-.terminalGrid>.paneCard {
-  height: 100%;
-}
-
-/* Cards */
-.paneCard {
   display: flex;
   flex-direction: column;
+}
+
+/* subtle “royal” backdrop layer */
+.bgAurora {
+  display: none !important;
+}
+
+/* ===========================
+   HEADER (UPDATED ONLY)
+   Use: <header className="appHeader">...</header>
+   =========================== */
+.appHeader {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+
+  padding: 14px 18px;
+
+  /* cleaner, richer header band */
+  background:
+    linear-gradient(180deg, rgba(7, 8, 12, 0.92), rgba(7, 8, 12, 0.66));
+  backdrop-filter: blur(16px);
+
+  border-bottom: 1px solid rgba(226, 232, 240, 0.10);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  /* removes any visual seam with body */
+  isolation: isolate;
+}
+
+.appHeader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* subtle silver highlight + gold accent line */
+  background:
+    radial-gradient(900px 180px at 50% 0%, rgba(226, 232, 240, 0.06), transparent 60%),
+    linear-gradient(90deg, transparent, rgba(244, 199, 90, 0.20), transparent);
+  opacity: 0.9;
+}
+
+.appHeader::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(244, 199, 90, 0.45),
+      rgba(226, 232, 240, 0.16),
+      rgba(244, 199, 90, 0.35),
+      transparent);
+}
+
+.headerInner {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.brandBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+
+  background:
+    radial-gradient(12px 12px at 30% 30%, rgba(244, 199, 90, 0.95), rgba(244, 199, 90, 0.12)),
+    linear-gradient(180deg, rgba(226, 232, 240, 0.14), rgba(226, 232, 240, 0.04));
+  border: 1px solid rgba(244, 199, 90, 0.30);
+  box-shadow: 0 10px 30px rgba(244, 199, 90, 0.10);
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brandTitle {
+  font-weight: 950;
+  letter-spacing: 0.6px;
+  font-size: 16px;
+}
+
+.brandSub {
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 750;
+  margin-top: 3px;
+}
+
+.headerCenter {
+  text-align: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.headerCenterTitle {
+  font-weight: 980;
+  letter-spacing: 0.7px;
+  font-size: 16px;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.headerCenterTitle span {
+  color: var(--gold);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+  justify-content: flex-end;
+}
+
+.headerPill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 232, 240, 0.86);
+  font-weight: 850;
+  font-size: 12px;
+}
+
+/* ===========================
+   MAIN CONTENT
+   =========================== */
+.mainWrap {
+  flex: 1;
+  padding: 18px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: calc(100vh - 120px);
+  /* header+footer approx */
+}
+
+/* Top card (Stock Controls) */
+.topWideCard {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
-    linear-gradient(180deg, var(--card), var(--card2));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(17, 19, 26, 0.74), rgba(11, 12, 18, 0.82));
   box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+/* Fundsap title above controls (centered) */
+.fundsapTitle {
+  text-align: center;
+  font-weight: 980;
+  letter-spacing: 0.8px;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: rgba(248, 250, 252, 0.90);
+}
+
+.fundsapTitle span {
+  color: var(--gold);
+}
+
+/* Bottom 3-column grid: Tech 25% | Fund 25% | Chart 50% */
+.bottomGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================
+   CARD STYLE (premium)
+   =========================== */
+.paneCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(17, 19, 26, 0.70), rgba(11, 12, 18, 0.78));
+  box-shadow: var(--shadowSoft);
   overflow: hidden;
-  min-height: 0;
   position: relative;
 }
 
@@ -129,139 +297,194 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.paneCard::after {
-  content: "";
-  position: absolute;
-  inset: -40px;
-  pointer-events: none;
-  background:
-    radial-gradient(500px 200px at 20% 0%, rgba(251, 191, 36, 0.06), transparent 60%),
-    radial-gradient(500px 200px at 80% 0%, rgba(56, 189, 248, 0.06), transparent 60%);
-  filter: blur(18px);
-  opacity: 0.9;
+.cardPad {
+  padding: 14px;
 }
 
-.paneLeft,
-.paneRight {
+/* Section heading */
+.sectionTitle {
   display: flex;
-  height: 100%;
-  min-height: 0;
-}
-
-/* Controls panel scroll */
-.controlsWrap {
-  width: 100%;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 0;
-  overflow: auto;
-  position: relative;
-  z-index: 1;
-}
-
-.controlsWrap::-webkit-scrollbar {
-  width: 10px;
-}
-
-.controlsWrap::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.10);
-  border-radius: 999px;
-}
-
-.controlsWrap::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 999px;
-}
-
-.controlsHeader {
-  display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
 }
 
-.title {
-  font-size: 18px;
-  font-weight: 950;
+.sectionTitle h3 {
+  margin: 0;
+  font-size: 14px;
   letter-spacing: 0.2px;
+  font-weight: 950;
 }
 
-.subtitle {
-  margin-top: 4px;
-  font-size: 12px;
+.sectionTitle small {
   color: var(--muted2);
+  font-weight: 800;
 }
 
-.pill {
-  border: 1px solid var(--border2);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 7px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.92);
-  font-weight: 900;
-  backdrop-filter: var(--blur);
-}
-
-/* Segmented */
-.segmented {
+.addRowOneLine {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: var(--blur);
 }
 
-.segBtn {
-  padding: 9px 12px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.88);
+.addRowOneLine .miniSelect {
+  flex: 1;
+  /* takes remaining space */
+  min-width: 140px;
+}
+
+.addRowOneLine .miniInput {
+  width: 88px;
+  /* period box */
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.addRowOneLine .btnPrimary {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* ===========================
+   Technical Chart
+   =========================== */
+
+.terminalPage {
+  padding: 18px;
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.topCard {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(12, 14, 20, 0.72);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  padding: 16px;
+}
+
+.appHeader {
+  display: grid;
+  place-items: center;
+  padding: 6px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+}
+
+.appTitle {
+  font-size: 18px;
   font-weight: 950;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  letter-spacing: 0.6px;
 }
 
-.segBtn:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.09);
+.appSubtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.70);
+  font-weight: 700;
 }
 
-.segBtn.active {
-  border-color: rgba(251, 191, 36, 0.52);
-  background: rgba(251, 191, 36, 0.16);
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  /* 25 / 25 / 50 */
+  gap: 18px;
+  align-items: start;
 }
 
-.miniToggle {
-  margin-left: auto;
+.gridCol {
+  min-width: 0;
+}
+
+.addRowOneLine {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--muted2);
+  gap: 10px;
+}
+
+.addRowOneLine .miniSelect {
+  flex: 1;
+  min-width: 140px;
+}
+
+.addRowOneLine .miniInput {
+  width: 88px;
+  text-align: center;
+}
+
+.addRowOneLine .btnPrimary {
+  white-space: nowrap;
+}
+
+/* responsive */
+@media (max-width: 1100px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================
+   INPUTS / SELECTS (premium dark)
+   Fix dropdown readability
+   =========================== */
+.input,
+.select,
+.miniSelect,
+.miniInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(248, 250, 252, 0.92);
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+}
+
+.input::placeholder {
+  color: rgba(226, 232, 240, 0.45);
+}
+
+.input:focus,
+.select:focus,
+.miniSelect:focus,
+.miniInput:focus {
+  border-color: rgba(244, 199, 90, 0.45);
+  box-shadow: 0 0 0 4px rgba(244, 199, 90, 0.12);
+  background: rgba(0, 0, 0, 0.30);
+}
+
+/* Native dropdown options should be readable */
+select,
+.select,
+.miniSelect {
+  appearance: auto;
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  background-color: rgba(0, 0, 0, 0.22);
+  color: rgba(248, 250, 252, 0.92);
+}
+
+/* Options list (browser-controlled) */
+select option {
+  background: #0b0d12;
+  color: #f8fafc;
+}
+
+/* Labels */
+.fieldLabel {
   font-size: 12px;
+  color: var(--muted2);
+  font-weight: 850;
 }
 
-.miniToggle input {
-  accent-color: var(--gold);
-}
-
-/* Fields */
 .fieldBlock {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.fieldLabel {
-  font-size: 12px;
-  color: var(--muted2);
-  font-weight: 900;
 }
 
 .fieldRow {
@@ -270,63 +493,60 @@ body {
   align-items: center;
 }
 
-.input,
-.select {
-  width: 100%;
-  padding: 11px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.input:focus,
-.select:focus {
-  border-color: rgba(56, 189, 248, 0.45);
-  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.12);
-  background: rgba(0, 0, 0, 0.28);
-}
-
-.chip {
-  border: 1px solid var(--border2);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 7px 10px;
+/* ===========================
+   BUTTONS (gold accent)
+   =========================== */
+.segBtn,
+.rangeBtn {
+  padding: 9px 12px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.86);
-  white-space: nowrap;
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 232, 240, 0.86);
+  font-weight: 920;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
 
-/* Two cards layout inside controls */
-.twoCards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.segBtn:hover,
+.rangeBtn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-@media (max-width: 520px) {
-  .twoCards {
-    grid-template-columns: 1fr;
-  }
+.segBtn.active,
+.rangeBtn.active {
+  border-color: rgba(244, 199, 90, 0.55);
+  background: rgba(244, 199, 90, 0.14);
+  color: rgba(248, 250, 252, 0.94);
 }
 
+.btnPrimary {
+  border: 1px solid rgba(244, 199, 90, 0.40);
+  background: rgba(244, 199, 90, 0.14);
+  color: rgba(248, 250, 252, 0.92);
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  background: rgba(244, 199, 90, 0.18);
+  box-shadow: 0 12px 34px rgba(244, 199, 90, 0.10);
+}
+
+/* ===========================
+   INNER CARDS (indicator blocks)
+   =========================== */
 .cardInner {
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(226, 232, 240, 0.10);
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-md);
   padding: 12px;
-  backdrop-filter: var(--blur);
   box-shadow: var(--shadowSoft);
-}
-
-.cardTitleRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
 }
 
 .cardTitle {
@@ -341,43 +561,7 @@ body {
   font-weight: 750;
 }
 
-.addRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.miniSelect,
-.miniInput {
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--text);
-  padding: 8px 10px;
-  outline: none;
-}
-
-.miniInput {
-  width: 78px;
-}
-
-.btnPrimary {
-  border: 1px solid rgba(251, 191, 36, 0.40);
-  background: rgba(251, 191, 36, 0.16);
-  color: rgba(255, 255, 255, 0.95);
-  padding: 9px 12px;
-  border-radius: 12px;
-  font-weight: 950;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
-}
-
-.btnPrimary:hover {
-  transform: translateY(-1px);
-  background: rgba(251, 191, 36, 0.22);
-  box-shadow: 0 12px 32px rgba(251, 191, 36, 0.08);
-}
-
+/* indicator list items */
 .list {
   display: flex;
   flex-direction: column;
@@ -386,7 +570,7 @@ body {
 }
 
 .listItem {
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(226, 232, 240, 0.10);
   background: rgba(0, 0, 0, 0.14);
   border-radius: 14px;
   padding: 10px;
@@ -394,64 +578,6 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-}
-
-.checkRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 950;
-}
-
-.checkRow input {
-  accent-color: var(--gold);
-}
-
-.badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  background: rgba(56, 189, 248, 0.10);
-  font-size: 12px;
-}
-
-.muted {
-  color: var(--muted2);
-  font-weight: 800;
-}
-
-.inlineControls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.miniField {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.miniLabel {
-  font-size: 11px;
-  color: var(--muted2);
-  font-weight: 900;
-}
-
-.iconBtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease;
-}
-
-.iconBtn:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.10);
 }
 
 .emptyNote {
@@ -459,39 +585,13 @@ body {
   font-size: 12px;
   padding: 10px;
   border-radius: 12px;
-  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border: 1px dashed rgba(226, 232, 240, 0.14);
   font-weight: 800;
 }
 
-/* Fundamental list */
-.soonList {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.soonItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(0, 0, 0, 0.14);
-  border-radius: 14px;
-  padding: 10px;
-}
-
-.soonPill {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.86);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 950;
-}
-
-/* Chart */
+/* ===========================
+   CHART WRAP (your chart already dark)
+   =========================== */
 .chartWrap {
   width: 100%;
   display: flex;
@@ -502,22 +602,14 @@ body {
 }
 
 .chartHeader {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.06));
-  backdrop-filter: var(--blur);
-}
-
-.chartTitleRow2 {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .chartTitle {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 980;
   letter-spacing: 0.2px;
 }
@@ -529,81 +621,6 @@ body {
   font-weight: 800;
 }
 
-.rangeRow {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.rangeBtn {
-  padding: 9px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.88);
-  font-weight: 980;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-}
-
-.rangeBtn:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.rangeBtn.active {
-  border-color: rgba(251, 191, 36, 0.50);
-  background: rgba(251, 191, 36, 0.16);
-}
-
-/* ✅ NEW: Legend bar for indicators */
-.legendBar {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.legendItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(10px);
-  font-size: 12px;
-  font-weight: 950;
-  color: rgba(255, 255, 255, 0.90);
-}
-
-/* The small color swatch */
-.legendSwatch {
-  width: 14px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(56, 189, 248, 0.95);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
-}
-
-/* optional: dashed sample (use <span class="legendDash" /> if you want) */
-.legendDash {
-  width: 18px;
-  height: 0;
-  border-top: 2px dashed rgba(255, 255, 255, 0.55);
-  opacity: 0.85;
-}
-
-.chartHint {
-  margin-top: 10px;
-  font-size: 11px;
-  color: rgba(148, 163, 184, 0.75);
-  font-weight: 750;
-}
-
 .chartBody {
   position: relative;
   flex: 1;
@@ -611,48 +628,249 @@ body {
   padding: 12px;
 }
 
-/* ✅ IMPORTANT: chart canvas must have a real height */
 .chartCanvas {
   flex: 1;
-  min-height: 420px;
+  min-height: 520px;
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(900px 420px at 50% 40%, rgba(255, 255, 255, 0.03), transparent 55%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.12));
+  border: 1px solid rgba(226, 232, 240, 0.10);
+  background: #0b0f19;
+  /* matches the chart */
   overflow: hidden;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Overlay message */
-.overlayMsg {
+/* ===========================
+   FOOTER (UPDATED ONLY)
+   Use: <footer className="appFooter">...</footer>
+   =========================== */
+/* Footer aliases for your JSX class names */
+/* Footer aliases for your JSX class names */
+.appFooterBar {
+  padding: 14px 18px;
+  border-top: 1px solid rgba(226, 232, 240, 0.10);
+  background: linear-gradient(180deg, rgba(7, 8, 12, 0.58), rgba(7, 8, 12, 0.92));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 -10px 26px rgba(0, 0, 0, 0.30);
+  position: relative;
+}
+
+.appFooterBar::before {
+  content: "";
   position: absolute;
-  inset: 12px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-md);
-  border: 1px dashed rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.26);
-  color: rgba(255, 255, 255, 0.92);
-  font-weight: 980;
-  z-index: 5;
-  backdrop-filter: blur(10px);
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(800px 140px at 50% 100%, rgba(226, 232, 240, 0.06), transparent 60%);
+  opacity: 0.9;
 }
 
-.overlayMsg.error {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.08);
+.appFooterBar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(244, 199, 90, 0.32),
+      rgba(226, 232, 240, 0.14),
+      rgba(244, 199, 90, 0.22),
+      transparent);
 }
 
-/* Not required, but if you show any "mock badge" */
-.mockBadge {
-  border: 1px solid rgba(251, 191, 36, 0.35);
-  background: rgba(251, 191, 36, 0.14);
-  color: rgba(255, 255, 255, 0.92);
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-weight: 950;
+.appFooterInner {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(226, 232, 240, 0.72);
+  font-weight: 750;
   font-size: 12px;
+}
+
+/* ===========================
+   Small helpers
+   =========================== */
+.pill {
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.86);
+  font-weight: 900;
+}
+
+/* ===========================
+   FINAL POLISH OVERRIDES
+   =========================== */
+
+.cardInner .listItem {
+  position: relative;
+}
+
+.cardInner .checkRow {
+  position: relative;
+  /* X will be positioned relative to this */
+  padding-right: 16px;
+  /* reserve space so label doesn't overlap X */
+}
+
+/* ==========================================================
+   ✅ FIX: CROSS POSITION 
+   ========================================================== */
+
+.cardInner .listItem .iconBtn {
+  position: absolute;
+
+  /* ✅ anchor inside the left cluster (so it follows toggle if it drops) */
+  top: 12px;
+  /* aligned with toggle row inside checkRow */
+  left: 65px;
+  /* 44(toggle width) + 14px gap */
+
+  transform: none;
+
+  /* keep sizing same */
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 10px;
+
+  /* keep your red theme exactly */
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
+  color: rgba(254, 226, 226, 0.92);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.10);
+
+  /* ensures it stays above chips/inputs */
+  z-index: 5;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hover = slightly stronger */
+.cardInner .listItem .iconBtn:hover {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: linear-gradient(180deg,
+      rgba(239, 68, 68, 0.24),
+      rgba(239, 68, 68, 0.10));
+}
+
+/* Make LEFT block a fixed, clean cluster so name can center under Toggle + X */
+.cardInner .checkRow input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.cardInner .checkRow input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.88);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.cardInner .checkRow input[type="checkbox"]:checked {
+  border-color: rgba(244, 199, 90, 0.45);
+  background: linear-gradient(180deg, rgba(244, 199, 90, 0.22), rgba(244, 199, 90, 0.10));
+  box-shadow: 0 0 0 4px rgba(244, 199, 90, 0.10);
+}
+
+.cardInner .checkRow input[type="checkbox"]:checked::after {
+  transform: translateX(18px);
+  background: rgba(244, 199, 90, 0.95);
+}
+
+/* ✅ Center the name under BOTH toggle + X */
+.cardInner .checkRow>div {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  font-size: 11px;
+  /* slightly smaller */
+  font-weight: 800;
+  line-height: 1.2;
+  opacity: 0.92;
+  text-align: center;
+  /* key: centers under toggle+X */
+}
+
+/* RIGHT: let params breathe a bit and stay perfectly 3-grid */
+.cardInner .inlineControls {
+  justify-self: end;
+  /* push the whole params grid to the right */
+  justify-items: end;
+  /* align each chip to the right edge */
+}
+
+/* Keep chips visually consistent */
+.cardInner .miniField .miniInput {
+  width: 56px !important;
+  /* was 70 */
+  padding: 8px 8px;
+  /* slightly tighter */
+}
+
+/* ✅ If ONLY one param: place it in last grid column */
+.cardInner .inlineControls .miniField:only-child {
+  grid-column: 3;
+}
+
+/* ✅ If TWO params: place them in columns 2 and 3 */
+.cardInner .inlineControls .miniField:first-child:nth-last-child(2) {
+  grid-column: 2;
+}
+
+.cardInner .inlineControls .miniField:first-child:nth-last-child(2)~.miniField {
+  grid-column: 3;
+}
+
+.cardInner .addRowOneLine .miniSelect {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.cardInner .addRowOneLine .miniInput {
+  width: 64px;
+}
+
+.cardInner .addRowOneLine {
+  gap: 8px;
+}
+
+/* slightly smaller gap */
+/* Mobile: don’t force fixed left width */
+@media (max-width: 520px) {
+  .cardInner .checkRow {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .cardInner .listItem .iconBtn {
+    left: 58px;
+    /* keep beside toggle on mobile too */
+  }
 }

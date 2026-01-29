@@ -9,6 +9,8 @@ export default function StockControls({
     setSymbol,
     days,
     setDays,
+    showIndicators = true,
+    showRange = true,
 }) {
     const onMarketChange = (m) => {
         setMarket(m);
@@ -40,7 +42,8 @@ export default function StockControls({
                         padding: "8px 12px",
                         borderRadius: 999,
                         border: "1px solid rgba(255,255,255,0.12)",
-                        background: market === "US" ? "rgba(251,191,36,0.18)" : "rgba(0,0,0,0.2)",
+                        background:
+                            market === "US" ? "rgba(251,191,36,0.18)" : "rgba(0,0,0,0.2)",
                         color: "white",
                         cursor: "pointer",
                     }}
@@ -54,7 +57,10 @@ export default function StockControls({
                         padding: "8px 12px",
                         borderRadius: 999,
                         border: "1px solid rgba(255,255,255,0.12)",
-                        background: market === "India" ? "rgba(251,191,36,0.18)" : "rgba(0,0,0,0.2)",
+                        background:
+                            market === "India"
+                                ? "rgba(251,191,36,0.18)"
+                                : "rgba(0,0,0,0.2)",
                         color: "white",
                         cursor: "pointer",
                     }}
@@ -63,16 +69,27 @@ export default function StockControls({
                 </button>
             </div>
 
-            <MarketStockPicker market={market} value={symbol} onChange={setSymbol} limit={10000} />
+            <MarketStockPicker
+                market={market}
+                value={symbol}
+                onChange={setSymbol}
+                limit={10000}
+            />
 
-            <div style={{ marginTop: 14, marginBottom: 10, fontSize: 12, opacity: 0.8 }}>
-                Range
-            </div>
-            <TimeRangePills range={days} setRange={setDays} />
+            {showRange ? (
+                <>
+                    <div style={{ marginTop: 14, marginBottom: 10, fontSize: 12, opacity: 0.8 }}>
+                        Range
+                    </div>
+                    <TimeRangePills range={days} setRange={setDays} />
+                </>
+            ) : null}
 
-            <div style={{ marginTop: 16 }}>
-                <IndicatorPanel />
-            </div>
+            {showIndicators ? (
+                <div style={{ marginTop: 16 }}>
+                    <IndicatorPanel />
+                </div>
+            ) : null}
         </div>
     );
 }

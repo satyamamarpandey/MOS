@@ -1,69 +1,49 @@
+// frontend/src/components/IndicatorPanel.jsx
 import { useMemo, useState } from "react";
+import {
+    INDICATOR_REGISTRY,
+    getIndicatorDefaults,
+    normalizeIndicatorConfig,
+} from "../utils/indicators";
 
-const INDICATORS = [
-    // overlays
-    { key: "SMA", kind: "overlay", supported: true },
-    { key: "EMA", kind: "overlay", supported: true },
-    { key: "WMA", kind: "overlay", supported: true },
-    { key: "VWAP", kind: "overlay", supported: true },
-    { key: "BB", kind: "overlay", supported: true },
-    { key: "Donchian", kind: "overlay", supported: true },
-    { key: "Keltner", kind: "overlay", supported: true },
+const INDICATOR_KEYS = Object.keys(INDICATOR_REGISTRY);
 
-    // oscillators / momentum (UI ready; chart support can come next)
-    { key: "RSI", kind: "osc", supported: false },
-    { key: "MACD", kind: "osc", supported: false },
-    { key: "Stochastic", kind: "osc", supported: false },
-    { key: "ATR", kind: "osc", supported: false },
-    { key: "ADX", kind: "osc", supported: false },
-    { key: "CCI", kind: "osc", supported: false },
-    { key: "ROC", kind: "osc", supported: false },
-    { key: "MOM", kind: "osc", supported: false },
-    { key: "OBV", kind: "osc", supported: false },
-    { key: "MFI", kind: "osc", supported: false },
-    { key: "WilliamsR", kind: "osc", supported: false },
-    { key: "Ichimoku", kind: "overlay", supported: false },
-    { key: "PSAR", kind: "overlay", supported: false },
-    { key: "Supertrend", kind: "overlay", supported: false },
-];
-
-function clampInt(v, fallback = 20) {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return fallback;
-    const x = Math.floor(n);
-    if (x <= 0) return fallback;
-    return x;
+function prettyLabel(k) {
+    return k;
 }
 
-export default function IndicatorPanel({ indicators, setIndicators }) {
-    const [type, setType] = useState("SMA");
-    const [period, setPeriod] = useState("20");
+export default function IndicatorPanel({
+    indicators,
+    setIndicators,
+    showHeader = true,
+}) {
+    const [type, setType] = useState(INDICATOR_KEYS[0] || "SMA");
 
-    const byKey = useMemo(() => {
-        const m = new Map();
-        for (const i of INDICATORS) m.set(i.key, i);
-        return m;
-    }, []);
+    // ✅ dynamic draft params based on selected indicator
+    const [draftParams, setDraftParams] = useState(() => getIndicatorDefaults(type));
+
+    const selectedDef = INDICATOR_REGISTRY[type];
+
+    // when type changes, reset defaults for that indicator (still editable)
+    const onTypeChange = (nextType) => {
+        setType(nextType);
+        setDraftParams(getIndicatorDefaults(nextType));
+    };
 
     const add = () => {
-        const p = clampInt(period, 20);
-        const info = byKey.get(type);
-        const next = {
-            id: `${type}_${p}_${Date.now()}`,
+        const base = {
+            id: `${type}_${Date.now()}`,
             type,
-            period: p,
             enabled: true,
-            kind: info?.kind || "overlay",
-            supported: !!info?.supported,
+            params: { ...draftParams },
         };
-        setIndicators((prev) => [next, ...(prev || [])]);
+        const normalized = normalizeIndicatorConfig(base);
+        setIndicators((prev) => [normalized, ...(prev || [])]);
     };
 
     const toggleEnabled = (id) => {
         setIndicators((prev) =>
-            (prev || []).map((x) =>
-                x.id === id ? { ...x, enabled: !x.enabled } : x
-            )
+            (prev || []).map((x) => (x.id === id ? { ...x, enabled: !x.enabled } : x))
         );
     };
 
@@ -71,59 +51,93 @@ export default function IndicatorPanel({ indicators, setIndicators }) {
         setIndicators((prev) => (prev || []).filter((x) => x.id !== id));
     };
 
-    const updatePeriod = (id, newP) => {
-        const p = clampInt(newP, 20);
+    const updateParam = (id, key, value) => {
         setIndicators((prev) =>
-            (prev || []).map((x) => (x.id === id ? { ...x, period: p } : x))
+            (prev || []).map((x) => {
+                if (x.id !== id) return x;
+                const next = {
+                    ...x,
+                    params: { ...(x.params || {}), [key]: value },
+                };
+                return normalizeIndicatorConfig(next);
+            })
         );
     };
 
+    const updateDraftParam = (key, value) => {
+        setDraftParams((p) => ({ ...(p || {}), [key]: value }));
+    };
+
+    const normalizedIndicators = useMemo(
+        () => (indicators || []).map(normalizeIndicatorConfig),
+        [indicators]
+    );
+
     return (
         <div className="cardInner">
-            <div className="cardTitleRow">
-                <div>
-                    <div className="cardTitle">Technical Indicators</div>
-                    <div className="cardHint">Add overlays now; oscillators will be plotted next.</div>
+            {showHeader && (
+                <div className="cardTitleRow">
+                    <div>
+                        <div className="cardTitle">Technical Indicators</div>
+                        <div className="cardHint">
+                            Defaults are optimized per indicator (editable).
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            <div className="addRow" style={{ marginTop: 10 }}>
+            {/* ✅ Add row */}
+            <div className="addRowOneLine" style={{ marginTop: showHeader ? 10 : 0 }}>
                 <select
                     className="miniSelect"
                     value={type}
-                    onChange={(e) => setType(e.target.value)}
+                    onChange={(e) => onTypeChange(e.target.value)}
                 >
-                    {INDICATORS.map((i) => (
-                        <option key={i.key} value={i.key}>
-                            {i.key}
+                    {INDICATOR_KEYS.map((k) => (
+                        <option key={k} value={k}>
+                            {prettyLabel(k)}
                         </option>
                     ))}
                 </select>
 
-                {/* ✅ period is truly editable (SMA 35 works) */}
-                <input
-                    className="miniInput"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value)}
-                    placeholder="Period"
-                />
+                {/* Dynamic params for selected indicator */}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    {(selectedDef?.params || []).length === 0 ? (
+                        <div style={{ fontSize: 12, opacity: 0.7, padding: "0 8px" }}>
+                            No params
+                        </div>
+                    ) : (
+                        (selectedDef?.params || []).map((p) => (
+                            <input
+                                key={p.key}
+                                className="miniInput"
+                                type="number"
+                                min={p.min ?? undefined}
+                                max={p.max ?? undefined}
+                                step={p.step ?? 1}
+                                value={draftParams?.[p.key] ?? p.default}
+                                onChange={(e) => updateDraftParam(p.key, e.target.value)}
+                                placeholder={p.label}
+                                style={{ width: 92 }}
+                            />
+                        ))
+                    )}
+                </div>
 
                 <button className="btnPrimary" type="button" onClick={add}>
                     Add
                 </button>
             </div>
 
+            {/* ✅ Added list */}
             <div className="list">
-                {(indicators || []).length === 0 && (
+                {(normalizedIndicators || []).length === 0 && (
                     <div className="emptyNote">No indicators added yet.</div>
                 )}
 
-                {(indicators || []).map((ind) => {
-                    const info = byKey.get(ind.type);
-                    const supported = ind.supported ?? !!info?.supported;
+                {(normalizedIndicators || []).map((ind) => {
+                    const def = INDICATOR_REGISTRY[ind.type];
+                    const params = def?.params || [];
 
                     return (
                         <div className="listItem" key={ind.id}>
@@ -132,31 +146,42 @@ export default function IndicatorPanel({ indicators, setIndicators }) {
                                     type="checkbox"
                                     checked={!!ind.enabled}
                                     onChange={() => toggleEnabled(ind.id)}
-                                    disabled={!supported}
-                                    title={!supported ? "Indicator plotting coming soon" : "Toggle"}
+                                    title="Toggle"
                                 />
                                 <div>
-                                    {ind.type}{" "}
-                                    <span className="muted">({ind.period})</span>{" "}
-                                    {!supported && <span className="soonPill">Soon</span>}
+                                    {ind.type}
+                                    {params.length ? (
+                                        <span className="muted" style={{ marginLeft: 6 }}>
+                                            (
+                                            {params
+                                                .map((p) => `${p.key}:${ind.params?.[p.key] ?? p.default}`)
+                                                .join(", ")}
+                                            )
+                                        </span>
+                                    ) : (
+                                        <span className="muted" style={{ marginLeft: 6 }}>
+                                            (no params)
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="inlineControls">
-                                {/* ✅ allow editing period inline */}
-                                <div className="miniField">
-                                    <span className="miniLabel">P</span>
-                                    <input
-                                        className="miniInput"
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        value={ind.period}
-                                        onChange={(e) => updatePeriod(ind.id, e.target.value)}
-                                        disabled={!supported}
-                                        style={{ width: 84 }}
-                                    />
-                                </div>
+                            <div className="inlineControls" style={{ gap: 10, flexWrap: "wrap" }}>
+                                {params.map((p) => (
+                                    <div className="miniField" key={p.key}>
+                                        <span className="miniLabel">{p.label}</span>
+                                        <input
+                                            className="miniInput"
+                                            type="number"
+                                            min={p.min ?? undefined}
+                                            max={p.max ?? undefined}
+                                            step={p.step ?? 1}
+                                            value={ind.params?.[p.key] ?? p.default}
+                                            onChange={(e) => updateParam(ind.id, p.key, e.target.value)}
+                                            style={{ width: 92 }}
+                                        />
+                                    </div>
+                                ))}
 
                                 <button
                                     className="iconBtn"
