@@ -7,6 +7,7 @@ export default function MarketStockPicker({
     symbol,
     onChange,
     limit = 2000,
+    autoPickFirst = true, // ✅ optional behavior
 }) {
     const selected = value ?? symbol ?? "";
     const setSelected = typeof onChange === "function" ? onChange : () => { };
@@ -16,6 +17,7 @@ export default function MarketStockPicker({
     const [loading, setLoading] = useState(false);
 
     const tRef = useRef(null);
+    const didAutoPickRef = useRef(false);
 
     useEffect(() => {
         if (tRef.current) clearTimeout(tRef.current);
@@ -35,21 +37,27 @@ export default function MarketStockPicker({
         };
     }, [market, query, limit]);
 
-    // If current symbol is not valid, pick the first one
+    // ✅ Auto-pick first ONLY ONCE (initial load) — avoids symbol jumping while searching
     useEffect(() => {
+        if (!autoPickFirst) return;
+        if (didAutoPickRef.current) return;
+        if (selected) return;
         if (!items.length) return;
-        const valid = new Set(items.map((x) => x.symbol));
-        if (!selected || !valid.has(selected)) {
-            setSelected(items[0].symbol);
-        }
+
+        // only auto-pick when query is empty (first page load)
+        if ((query || "").trim() !== "") return;
+
+        didAutoPickRef.current = true;
+        setSelected(items[0].symbol);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items]);
+    }, [items, autoPickFirst]);
 
     return (
         <div>
             <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
                 Search (symbol or name)
             </div>
+
             <input
                 style={{
                     width: "100%",
@@ -63,7 +71,7 @@ export default function MarketStockPicker({
                 }}
                 placeholder="Type e.g. AAPL, MSFT, RELIANCE"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)} // ✅ only query changes while typing
             />
 
             <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
@@ -84,8 +92,12 @@ export default function MarketStockPicker({
                     outline: "none",
                 }}
                 value={selected || ""}
-                onChange={(e) => setSelected(e.target.value)}
+                onChange={(e) => setSelected(e.target.value)} // ✅ symbol changes only when user chooses
             >
+                <option value="" disabled>
+                    {items.length ? "Select a stock…" : "No results"}
+                </option>
+
                 {items.map((it) => (
                     <option key={it.symbol} value={it.symbol}>
                         {it.name ? `${it.symbol} (${it.name})` : it.symbol}

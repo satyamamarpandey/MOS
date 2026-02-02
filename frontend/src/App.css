@@ -1,10 +1,19 @@
 /* ===========================
    Fundsap — Premium Black/Gold/Silver Theme
    App.css (FULL REPLACE)
-   ✅ Only Header + Footer updated
-   ✅ Everything else kept the same
+   ✅ Cleaner header (icon on the left)
+   ✅ Consistent aurora background (global)
+   ✅ Chart backdrop isolated + high-contrast
+   ✅ Better dropdowns
+   ✅ Consistent button padding
+   ✅ Indicators: when 2+ params -> values stay on RIGHT and each param is ONE LINE (label + input)
+   ✅ 3 params -> name starts from left (like others) + smaller param label font
+   ✅ Removed redundant/unused chunks from your pasted version (no extra terminalPage/topCard overrides, no old grid-column hacks)
    =========================== */
 
+/* ===========================
+   THEME TOKENS
+=========================== */
 :root {
   /* Core */
   --black: #07080c;
@@ -38,9 +47,35 @@
   --shadowSoft: 0 16px 55px rgba(0, 0, 0, 0.42);
 
   --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial;
+
+  /* Consistency controls */
+  --pad-page: 18px;
+  --pad-card: 14px;
+  --gap: 14px;
+
+  --btn-pad-y: 10px;
+  --btn-pad-x: 14px;
+  --btn-radius: 999px;
+
+  --ctl-pad-y: 10px;
+  --ctl-pad-x: 12px;
+  --ctl-radius: 14px;
+
+  /* Chart readability */
+  --chart-bg: #060a13;
+  --chart-bg2: #0b1120;
+  --chart-border: rgba(226, 232, 240, 0.10);
+
+  /* Aurora colors */
+  --aurora-gold: rgba(244, 199, 90, 0.18);
+  --aurora-teal: rgba(56, 189, 248, 0.18);
+  --aurora-purple: rgba(168, 85, 247, 0.16);
+  --aurora-green: rgba(34, 197, 94, 0.16);
 }
 
-/* ---------- Base ---------- */
+/* ===========================
+   BASE / RESET
+=========================== */
 html,
 body,
 #root {
@@ -55,8 +90,37 @@ body {
   margin: 0;
   font-family: var(--font);
   color: var(--text);
-  background: radial-gradient(1200px 700px at 50% 0%, rgba(244, 199, 90, 0.06), transparent 55%),
-    linear-gradient(180deg, #07080c, #07080c);
+  background: #07080c;
+  overflow-x: hidden;
+}
+
+/* Consistent aurora backdrop (global) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 520px at 18% -5%, var(--aurora-purple), transparent 58%),
+    radial-gradient(880px 520px at 82% 2%, var(--aurora-teal), transparent 60%),
+    radial-gradient(950px 540px at 45% 16%, var(--aurora-gold), transparent 62%),
+    radial-gradient(980px 560px at 65% 92%, var(--aurora-green), transparent 60%),
+    linear-gradient(180deg, #07080c 0%, #07080c 100%);
+  filter: saturate(1.06) contrast(1.02);
+}
+
+/* Soft grain to make gradients blend (removes banding / seams) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 3px 3px;
+  mix-blend-mode: overlay;
 }
 
 a {
@@ -70,38 +134,41 @@ select {
   font: inherit;
 }
 
-/* ---------- App Shell ---------- */
+button {
+  border: none;
+  background: none;
+}
+
+/* Hide any old aurora layer in DOM (keep consistent one above) */
+.bgAurora {
+  display: none !important;
+}
+
+/* ===========================
+   APP SHELL
+=========================== */
 .appShell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* subtle “royal” backdrop layer */
-.bgAurora {
-  display: none !important;
-}
-
 /* ===========================
-   HEADER (UPDATED ONLY)
+   HEADER (BETTER + ICON LEFT)
    Use: <header className="appHeader">...</header>
-   =========================== */
+=========================== */
 .appHeader {
   position: sticky;
   top: 0;
   z-index: 80;
-
   padding: 14px 18px;
 
-  /* cleaner, richer header band */
-  background:
-    linear-gradient(180deg, rgba(7, 8, 12, 0.92), rgba(7, 8, 12, 0.66));
-  backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(7, 8, 12, 0.94), rgba(7, 8, 12, 0.68));
+  backdrop-filter: blur(18px);
 
   border-bottom: 1px solid rgba(226, 232, 240, 0.10);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.40);
 
-  /* removes any visual seam with body */
   isolation: isolate;
 }
 
@@ -110,12 +177,10 @@ select {
   position: absolute;
   inset: 0;
   pointer-events: none;
-
-  /* subtle silver highlight + gold accent line */
   background:
-    radial-gradient(900px 180px at 50% 0%, rgba(226, 232, 240, 0.06), transparent 60%),
-    linear-gradient(90deg, transparent, rgba(244, 199, 90, 0.20), transparent);
-  opacity: 0.9;
+    radial-gradient(900px 200px at 50% 0%, rgba(226, 232, 240, 0.07), transparent 60%),
+    linear-gradient(90deg, transparent, rgba(244, 199, 90, 0.22), transparent);
+  opacity: 0.95;
 }
 
 .appHeader::after {
@@ -126,12 +191,11 @@ select {
   bottom: -1px;
   height: 1px;
   pointer-events: none;
-
   background: linear-gradient(90deg,
       transparent,
-      rgba(244, 199, 90, 0.45),
-      rgba(226, 232, 240, 0.16),
-      rgba(244, 199, 90, 0.35),
+      rgba(244, 199, 90, 0.50),
+      rgba(226, 232, 240, 0.18),
+      rgba(244, 199, 90, 0.40),
       transparent);
 }
 
@@ -156,15 +220,35 @@ select {
 }
 
 .brandMark {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
+  border: 1px solid rgba(244, 199, 90, 0.36);
+  box-shadow: 0 14px 40px rgba(244, 199, 90, 0.10);
+  position: relative;
+  overflow: hidden;
 
+  /* base plate */
   background:
-    radial-gradient(12px 12px at 30% 30%, rgba(244, 199, 90, 0.95), rgba(244, 199, 90, 0.12)),
-    linear-gradient(180deg, rgba(226, 232, 240, 0.14), rgba(226, 232, 240, 0.04));
-  border: 1px solid rgba(244, 199, 90, 0.30);
-  box-shadow: 0 10px 30px rgba(244, 199, 90, 0.10);
+    radial-gradient(14px 14px at 30% 30%, rgba(244, 199, 90, 0.95), rgba(244, 199, 90, 0.10)),
+    linear-gradient(180deg, rgba(226, 232, 240, 0.16), rgba(226, 232, 240, 0.04));
+}
+
+/* icon glyph (no JSX change needed) */
+.brandMark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  opacity: 0.95;
+
+  /* simple "trend up" svg as a mask */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 16l6-6 4 4 6-6v4h2V4h-8v2h4l-4 4-4-4-8 8z'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M4 16l6-6 4 4 6-6v4h2V4h-8v2h4l-4 4-4-4-8 8z'/%3E%3C/svg%3E") no-repeat center / contain;
+
+  background: linear-gradient(180deg, rgba(244, 199, 90, 0.98), rgba(226, 232, 240, 0.70));
 }
 
 .brandText {
@@ -214,24 +298,24 @@ select {
 .headerPill {
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(226, 232, 240, 0.12);
+  border: 1px solid rgba(226, 232, 240, 0.14);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(226, 232, 240, 0.86);
   font-weight: 850;
   font-size: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
 
 /* ===========================
    MAIN CONTENT
-   =========================== */
+=========================== */
 .mainWrap {
   flex: 1;
-  padding: 18px;
+  padding: var(--pad-page);
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   min-height: calc(100vh - 120px);
-  /* header+footer approx */
 }
 
 /* Top card (Stock Controls) */
@@ -242,7 +326,7 @@ select {
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
     linear-gradient(180deg, rgba(17, 19, 26, 0.74), rgba(11, 12, 18, 0.82));
   box-shadow: var(--shadow);
-  padding: 14px;
+  padding: var(--pad-card);
 }
 
 /* Fundsap title above controls (centered) */
@@ -264,7 +348,7 @@ select {
   margin-top: 16px;
   display: grid;
   grid-template-columns: 1fr 1fr 2fr;
-  gap: 14px;
+  gap: var(--gap);
   align-items: start;
 }
 
@@ -276,7 +360,7 @@ select {
 
 /* ===========================
    CARD STYLE (premium)
-   =========================== */
+=========================== */
 .paneCard {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -298,7 +382,7 @@ select {
 }
 
 .cardPad {
-  padding: 14px;
+  padding: var(--pad-card);
 }
 
 /* Section heading */
@@ -321,123 +405,17 @@ select {
   font-weight: 800;
 }
 
-.addRowOneLine {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.addRowOneLine .miniSelect {
-  flex: 1;
-  /* takes remaining space */
-  min-width: 140px;
-}
-
-.addRowOneLine .miniInput {
-  width: 88px;
-  /* period box */
-  flex: 0 0 auto;
-  text-align: center;
-}
-
-.addRowOneLine .btnPrimary {
-  flex: 0 0 auto;
-  padding: 10px 14px;
-  border-radius: 12px;
-  white-space: nowrap;
-}
-
-/* ===========================
-   Technical Chart
-   =========================== */
-
-.terminalPage {
-  padding: 18px;
-  display: grid;
-  gap: 18px;
-  width: 100%;
-}
-
-.topCard {
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(12, 14, 20, 0.72);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-  padding: 16px;
-}
-
-.appHeader {
-  display: grid;
-  place-items: center;
-  padding: 6px 0 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 14px;
-}
-
-.appTitle {
-  font-size: 18px;
-  font-weight: 950;
-  letter-spacing: 0.6px;
-}
-
-.appSubtitle {
-  margin-top: 4px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.70);
-  font-weight: 700;
-}
-
-.bottomGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 2fr;
-  /* 25 / 25 / 50 */
-  gap: 18px;
-  align-items: start;
-}
-
-.gridCol {
-  min-width: 0;
-}
-
-.addRowOneLine {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.addRowOneLine .miniSelect {
-  flex: 1;
-  min-width: 140px;
-}
-
-.addRowOneLine .miniInput {
-  width: 88px;
-  text-align: center;
-}
-
-.addRowOneLine .btnPrimary {
-  white-space: nowrap;
-}
-
-/* responsive */
-@media (max-width: 1100px) {
-  .bottomGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ===========================
    INPUTS / SELECTS (premium dark)
-   Fix dropdown readability
-   =========================== */
+=========================== */
 .input,
 .select,
 .miniSelect,
 .miniInput {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(226, 232, 240, 0.14);
+  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  border-radius: var(--ctl-radius);
+  border: 1px solid rgba(226, 232, 240, 0.16);
   background: rgba(0, 0, 0, 0.22);
   color: rgba(248, 250, 252, 0.92);
   outline: none;
@@ -452,23 +430,31 @@ select {
 .select:focus,
 .miniSelect:focus,
 .miniInput:focus {
-  border-color: rgba(244, 199, 90, 0.45);
+  border-color: rgba(244, 199, 90, 0.50);
   box-shadow: 0 0 0 4px rgba(244, 199, 90, 0.12);
   background: rgba(0, 0, 0, 0.30);
 }
 
-/* Native dropdown options should be readable */
+/* Native select styling (clean arrow, better spacing) */
 select,
 .select,
 .miniSelect {
-  appearance: auto;
-  -webkit-appearance: menulist;
-  -moz-appearance: menulist;
-  background-color: rgba(0, 0, 0, 0.22);
-  color: rgba(248, 250, 252, 0.92);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding-right: 38px;
+  line-height: 1.2;
+
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='rgba(226,232,240,0.78)' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, calc(100% - 12px) 50%;
+  background-size: auto, 18px 18px;
 }
 
-/* Options list (browser-controlled) */
+/* Ensure option list stays readable */
 select option {
   background: #0b0d12;
   color: #f8fafc;
@@ -495,23 +481,24 @@ select option {
 
 /* ===========================
    BUTTONS (gold accent)
-   =========================== */
+=========================== */
 .segBtn,
 .rangeBtn {
-  padding: 9px 12px;
-  border-radius: 999px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(226, 232, 240, 0.14);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(226, 232, 240, 0.86);
   font-weight: 920;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .segBtn:hover,
 .rangeBtn:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
 
 .segBtn.active,
@@ -519,28 +506,66 @@ select option {
   border-color: rgba(244, 199, 90, 0.55);
   background: rgba(244, 199, 90, 0.14);
   color: rgba(248, 250, 252, 0.94);
+  box-shadow: 0 0 0 4px rgba(244, 199, 90, 0.08);
 }
 
 .btnPrimary {
-  border: 1px solid rgba(244, 199, 90, 0.40);
+  border: 1px solid rgba(244, 199, 90, 0.42);
   background: rgba(244, 199, 90, 0.14);
   color: rgba(248, 250, 252, 0.92);
-  padding: 9px 12px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
   border-radius: 12px;
   font-weight: 950;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
 .btnPrimary:hover {
   transform: translateY(-1px);
   background: rgba(244, 199, 90, 0.18);
-  box-shadow: 0 12px 34px rgba(244, 199, 90, 0.10);
+  box-shadow: 0 14px 38px rgba(244, 199, 90, 0.12);
+  border-color: rgba(244, 199, 90, 0.55);
+}
+
+/* Pills (small UI) */
+.pill {
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.86);
+  font-weight: 900;
+}
+
+/* ===========================
+   TECHNICAL INDICATORS (add row)
+=========================== */
+.addRowOneLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.addRowOneLine .miniSelect {
+  flex: 1;
+  min-width: 140px;
+}
+
+.addRowOneLine .miniInput {
+  width: 88px;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+.addRowOneLine .btnPrimary {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* ===========================
    INNER CARDS (indicator blocks)
-   =========================== */
+=========================== */
 .cardInner {
   border: 1px solid rgba(226, 232, 240, 0.10);
   background: rgba(255, 255, 255, 0.03);
@@ -561,7 +586,6 @@ select option {
   font-weight: 750;
 }
 
-/* indicator list items */
 .list {
   display: flex;
   flex-direction: column;
@@ -569,7 +593,9 @@ select option {
   margin-top: 12px;
 }
 
+/* Indicator row container */
 .listItem {
+  position: relative;
   border: 1px solid rgba(226, 232, 240, 0.10);
   background: rgba(0, 0, 0, 0.14);
   border-radius: 14px;
@@ -590,8 +616,8 @@ select option {
 }
 
 /* ===========================
-   CHART WRAP (your chart already dark)
-   =========================== */
+   CHART WRAP (isolated backdrop)
+=========================== */
 .chartWrap {
   width: 100%;
   display: flex;
@@ -599,13 +625,13 @@ select option {
   min-height: 0;
   position: relative;
   z-index: 1;
+  isolation: isolate;
 }
 
 .chartHeader {
   padding: 14px 14px 10px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.08);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.06));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.08));
 }
 
 .chartTitle {
@@ -628,31 +654,45 @@ select option {
   padding: 12px;
 }
 
+/* Main chart container */
 .chartCanvas {
   flex: 1;
   min-height: 520px;
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(226, 232, 240, 0.10);
-  background: #0b0f19;
-  /* matches the chart */
+  border: 1px solid var(--chart-border);
+  background:
+    radial-gradient(900px 520px at 40% 15%, rgba(244, 199, 90, 0.06), transparent 60%),
+    radial-gradient(900px 520px at 75% 85%, rgba(56, 189, 248, 0.05), transparent 62%),
+    linear-gradient(180deg, var(--chart-bg), var(--chart-bg2));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   overflow: hidden;
+  backdrop-filter: none;
+}
+
+.chartCanvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 22%),
+    radial-gradient(900px 240px at 50% 0%, rgba(226, 232, 240, 0.045), transparent 60%);
+  opacity: 0.95;
 }
 
 /* ===========================
-   FOOTER (UPDATED ONLY)
-   Use: <footer className="appFooter">...</footer>
-   =========================== */
-/* Footer aliases for your JSX class names */
-/* Footer aliases for your JSX class names */
+   FOOTER
+=========================== */
 .appFooterBar {
   padding: 14px 18px;
   border-top: 1px solid rgba(226, 232, 240, 0.10);
-  background: linear-gradient(180deg, rgba(7, 8, 12, 0.58), rgba(7, 8, 12, 0.92));
-  backdrop-filter: blur(14px);
-  box-shadow: 0 -10px 26px rgba(0, 0, 0, 0.30);
+  background: linear-gradient(180deg, rgba(7, 8, 12, 0.60), rgba(7, 8, 12, 0.94));
+  backdrop-filter: blur(16px);
+  box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.35);
   position: relative;
+  isolation: isolate;
 }
 
 .appFooterBar::before {
@@ -660,8 +700,10 @@ select option {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(800px 140px at 50% 100%, rgba(226, 232, 240, 0.06), transparent 60%);
-  opacity: 0.9;
+  background:
+    radial-gradient(900px 180px at 50% 100%, rgba(226, 232, 240, 0.06), transparent 62%),
+    linear-gradient(90deg, transparent, rgba(244, 199, 90, 0.18), transparent);
+  opacity: 0.95;
 }
 
 .appFooterBar::after {
@@ -674,9 +716,9 @@ select option {
   pointer-events: none;
   background: linear-gradient(90deg,
       transparent,
-      rgba(244, 199, 90, 0.32),
-      rgba(226, 232, 240, 0.14),
-      rgba(244, 199, 90, 0.22),
+      rgba(244, 199, 90, 0.40),
+      rgba(226, 232, 240, 0.16),
+      rgba(244, 199, 90, 0.30),
       transparent);
 }
 
@@ -689,83 +731,73 @@ select option {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: rgba(226, 232, 240, 0.72);
-  font-weight: 750;
+  color: rgba(226, 232, 240, 0.74);
+  font-weight: 780;
   font-size: 12px;
 }
 
-/* ===========================
-   Small helpers
-   =========================== */
-.pill {
-  border: 1px solid rgba(226, 232, 240, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 7px 10px;
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(226, 232, 240, 0.70);
+}
+
+.footerDot {
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
-  font-size: 12px;
-  color: rgba(226, 232, 240, 0.86);
-  font-weight: 900;
+  background: rgba(244, 199, 90, 0.85);
+  box-shadow: 0 0 0 4px rgba(244, 199, 90, 0.10);
 }
 
 /* ===========================
-   FINAL POLISH OVERRIDES
-   =========================== */
-
-.cardInner .listItem {
-  position: relative;
-}
-
+   INDICATOR TOGGLE + X (BASE)
+=========================== */
 .cardInner .checkRow {
   position: relative;
-  /* X will be positioned relative to this */
   padding-right: 16px;
-  /* reserve space so label doesn't overlap X */
 }
 
-/* ==========================================================
-   ✅ FIX: CROSS POSITION 
-   ========================================================== */
-
+/* X button (base position: aligned with toggle row) */
 .cardInner .listItem .iconBtn {
   position: absolute;
-
-  /* ✅ anchor inside the left cluster (so it follows toggle if it drops) */
   top: 12px;
-  /* aligned with toggle row inside checkRow */
   left: 65px;
-  /* 44(toggle width) + 14px gap */
-
+  /* 44 toggle width + gap */
   transform: none;
 
-  /* keep sizing same */
   width: 26px;
   height: 26px;
   padding: 0;
   border-radius: 10px;
 
-  /* keep your red theme exactly */
   border: 1px solid rgba(239, 68, 68, 0.35);
   background: linear-gradient(180deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
   color: rgba(254, 226, 226, 0.92);
   box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.10);
 
-  /* ensures it stays above chips/inputs */
   z-index: 5;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  cursor: pointer;
 }
 
-/* Hover = slightly stronger */
 .cardInner .listItem .iconBtn:hover {
   border-color: rgba(239, 68, 68, 0.55);
-  background: linear-gradient(180deg,
-      rgba(239, 68, 68, 0.24),
-      rgba(239, 68, 68, 0.10));
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.24), rgba(239, 68, 68, 0.10));
 }
 
-/* Make LEFT block a fixed, clean cluster so name can center under Toggle + X */
+/* Toggle (premium) */
 .cardInner .checkRow input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -805,72 +837,88 @@ select option {
   background: rgba(244, 199, 90, 0.95);
 }
 
-/* ✅ Center the name under BOTH toggle + X */
+/* Default name placement (center under toggle+X) */
 .cardInner .checkRow>div {
   grid-row: 2;
   grid-column: 1 / -1;
   font-size: 11px;
-  /* slightly smaller */
   font-weight: 800;
   line-height: 1.2;
   opacity: 0.92;
   text-align: center;
-  /* key: centers under toggle+X */
 }
 
-/* RIGHT: let params breathe a bit and stay perfectly 3-grid */
-.cardInner .inlineControls {
+/* ===========================
+   MULTI-PARAM INDICATORS (2+ values)
+   ✅ keep everything on RIGHT
+   ✅ each param on ONE LINE: label + input (including Smooth)
+   ✅ nudge X slightly (padding-top) to match toggle height perfectly
+=========================== */
+
+/* When there are 2+ params, treat right side as a vertical list aligned right */
+.cardInner .inlineControls:has(.miniField:nth-child(2)) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+
+  text-align: right;
   justify-self: end;
-  /* push the whole params grid to the right */
-  justify-items: end;
-  /* align each chip to the right edge */
 }
 
-/* Keep chips visually consistent */
-.cardInner .miniField .miniInput {
-  width: 56px !important;
-  /* was 70 */
-  padding: 8px 8px;
-  /* slightly tighter */
+/* Each param line: [Label] [Input] */
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .miniField {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-/* ✅ If ONLY one param: place it in last grid column */
-.cardInner .inlineControls .miniField:only-child {
-  grid-column: 3;
+/* Smaller param label font (applies to %K/%D/Smooth/Length/StdDev etc.) */
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .miniField span,
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .miniField label,
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .miniLabel,
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .fieldLabel {
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.86;
+  white-space: nowrap;
 }
 
-/* ✅ If TWO params: place them in columns 2 and 3 */
-.cardInner .inlineControls .miniField:first-child:nth-last-child(2) {
-  grid-column: 2;
+/* Multi-param input sizing */
+.cardInner .inlineControls:has(.miniField:nth-child(2)) .miniInput {
+  width: 64px !important;
+  text-align: center;
 }
 
-.cardInner .inlineControls .miniField:first-child:nth-last-child(2)~.miniField {
-  grid-column: 3;
+/* Multi-param: align X with toggle (slight top padding for glyph centering) */
+.cardInner .listItem:has(.inlineControls .miniField:nth-child(2)) .iconBtn {
+  top: 12px !important;
+  padding-top: 1px !important;
 }
 
-.cardInner .addRowOneLine .miniSelect {
-  min-width: 0;
-  flex: 1 1 auto;
+/* 3 params only: name starts from LEFT like others */
+.cardInner .listItem:has(.inlineControls .miniField:nth-child(3)) .checkRow>div {
+  text-align: left !important;
+  width: 100%;
 }
 
-.cardInner .addRowOneLine .miniInput {
-  width: 64px;
+/* ✅ 2 VALUES ONLY — if the row has exactly 2 miniFields anywhere inside inlineControls */
+.cardInner .listItem:has(.inlineControls .miniField:nth-child(2)):not(:has(.inlineControls .miniField:nth-child(3))) .iconBtn {
+  top: 42px !important;
+  padding-top: 1px !important;
 }
 
-.cardInner .addRowOneLine {
-  gap: 8px;
+/* ✅ 3 VALUES ONLY (has 3rd param) */
+.cardInner .listItem:has(.inlineControls .miniField:nth-child(3)) .iconBtn {
+  top: 52px !important;
+  /* adjust ONLY 3-param rows */
+  padding-top: 1px !important;
 }
 
-/* slightly smaller gap */
-/* Mobile: don’t force fixed left width */
+/* Mobile tweaks */
 @media (max-width: 520px) {
-  .cardInner .checkRow {
-    flex: 1 1 auto;
-    max-width: none;
-  }
-
   .cardInner .listItem .iconBtn {
     left: 58px;
-    /* keep beside toggle on mobile too */
   }
 }

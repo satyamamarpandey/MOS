@@ -48,12 +48,12 @@ console.log("\n✅ Starting Full Stack Dev (R2 latest auto-sync)...\n");
 
 // 1) Start backend (FastAPI) — it will sync latest DBs from R2 in startup()
 console.log("🚀 Starting backend (FastAPI)...");
-run("python", ["-m", "uvicorn", "app.main:app", "--reload", "--host", "127.0.0.1", "--port", "8000"], backendDir);
+run("python", ["-m", "uvicorn", "app.main:app", "--reload", "--host", "127.0.0.1", "--port", "8001"], backendDir);
 
 // 2) Start frontend only after backend ready
 (async () => {
     console.log("⏳ Waiting for backend /health...");
-    await waitForHealth("http://127.0.0.1:8000/health");
+    await waitForHealth("http://127.0.0.1:8001/health");
     console.log("✅ Backend ready. Starting frontend...");
     run("npm", ["run", "dev"], frontendDir);
 })();

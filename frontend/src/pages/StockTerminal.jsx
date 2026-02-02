@@ -15,7 +15,7 @@ export default function StockTerminal() {
     const [rows, setRows] = useState([]);
     const [error, setError] = useState("");
 
-    // ✅ NEW: indicator configs live here (single source of truth)
+    // Single source of truth for technical indicator configs
     const [indicators, setIndicators] = useState([]);
 
     useEffect(() => {
@@ -48,7 +48,6 @@ export default function StockTerminal() {
 
     return (
         <div className="terminalPage">
-            {/* ===== Top full-width: Header + Stock Controls ===== */}
             <div className="topCard">
                 <div className="appHeader">
                     <div className="appTitle">Fundsap</div>
@@ -67,22 +66,16 @@ export default function StockTerminal() {
                 />
             </div>
 
-            {/* ===== Bottom: 3-column grid ===== */}
             <div className="bottomGrid">
-                {/* Grid 1 (25%) */}
                 <div className="gridCol">
-                    <TechnicalIndicatorsPanel
-                        indicators={indicators}
-                        setIndicators={setIndicators}
-                    />
+                    <TechnicalIndicatorsPanel indicators={indicators} setIndicators={setIndicators} />
                 </div>
 
-                {/* Grid 2 (25%) */}
                 <div className="gridCol">
-                    <FundamentalIndicatorsPanel />
+                    {/* Panel clears when selection changes, but caches results internally */}
+                    <FundamentalIndicatorsPanel market={market} symbol={symbol} />
                 </div>
 
-                {/* Grid 3 (50%) */}
                 <div className="gridCol">
                     <StockChart
                         market={market}
@@ -91,7 +84,6 @@ export default function StockTerminal() {
                         days={days}
                         setDays={setDays}
                         error={error}
-                        // ✅ NEW
                         indicators={indicators}
                     />
                 </div>
