@@ -10,6 +10,9 @@ import random
 import requests
 import yfinance as yf
 
+# ✅ NEW: Screener provider
+from .providers.screener_client import get_screener_snapshot_cached
+
 
 # ============================================================
 # Single-flight + Yahoo cooldown + per-symbol soft fail cache
@@ -258,9 +261,44 @@ def _to_float(x: Any) -> Optional[float]:
 
 
 # ============================================================
+# ✅ Screener (India)
+# ============================================================
+def _screener_fetch_summary(symbol: str, force_refresh: bool) -> Dict[str, Any]:
+    """
+    Returns a yfinance-like summary dict so the merge logic stays simple.
+    """
+    snap = get_screener_snapshot_cached(symbol, force_refresh=force_refresh)
+
+    roe_decimal = None
+    if snap.roe_pct is not None:
+        roe_decimal = float(snap.roe_pct) / 100.0
+
+    out = {
+        "currency": snap.currency,
+        "market_cap": snap.market_cap_inr,
+        "pe": snap.pe,
+        "pb": snap.pb,
+        "revenue_ttm": None,
+        "net_income_ttm": None,
+        "fcf_ttm": None,
+        "debt_to_equity": None,
+        "roe": roe_decimal,
+        "raw_screener": {
+            "code": snap.code,
+            "url": snap.url,
+            "current_price": snap.current_price_inr,
+            "book_value": snap.book_value_inr,
+            "dividend_yield_pct": snap.dividend_yield_pct,
+            "roce_pct": snap.roce_pct,
+            "high_52w": snap.high_52w_inr,
+            "low_52w": snap.low_52w_inr,
+        },
+    }
+    return out
+
+
+# ============================================================
 # Yahoo via yfinance (STRICT by default)
-#   - Always try fast_info (cheap)
-#   - Only call .info if force_refresh=True AND allowed
 # ============================================================
 def _yf_fetch_summary(symbol: str, allow_info: bool = False) -> Dict[str, Any]:
     sym = (symbol or "").upper().strip()
@@ -324,14 +362,12 @@ def _yf_fetch_summary(symbol: str, allow_info: bool = False) -> Dict[str, Any]:
             last_err = e
             msg = str(e).lower()
 
-            # Rate limit or response garbage => block & softcache this symbol
             if "too many requests" in msg or "429" in msg or "expecting value" in msg:
                 _yahoo_block_for(YAHOO_COOLDOWN_SECONDS)
                 _yahoo_symbol_softblock(sym, YAHOO_FAIL_SOFTCACHE_MINUTES)
                 time.sleep(base_sleep + random.random() * 0.35)
                 continue
 
-            # Other errors: softcache symbol and stop
             _yahoo_symbol_softblock(sym, YAHOO_FAIL_SOFTCACHE_MINUTES)
             break
 
@@ -490,7 +526,6 @@ def _sec_compute_metrics(symbol: str) -> Dict[str, Any]:
     ocf4 = _sum_vals(_last_n_quarters(ocf, 4))
     cap4 = _sum_vals(_last_n_quarters(capex, 4))
 
-    # FY fallback
     if rev4 is None:
         rev_latest = _latest_by_end([it for it in rev if (it.get("fp") or "").upper() == "FY"])
         rev4 = _to_float(rev_latest.get("val")) if rev_latest else None
@@ -541,7 +576,9 @@ def _sec_compute_metrics(symbol: str) -> Dict[str, Any]:
 # ============================================================
 # Response formatting
 # ============================================================
-def _pick_source(sec_data: Dict[str, Any], yf_data: Dict[str, Any]) -> str:
+def _pick_source(market_u: str, sec_data: Dict[str, Any], yf_data: Dict[str, Any]) -> str:
+    if market_u == "IN":
+        return "screener"
     if sec_data.get("sec_ok") and (not yf_data.get("yf_skipped")):
         return "sec+yf"
     if sec_data.get("sec_ok"):
@@ -584,7 +621,6 @@ def compute_and_cache_fundamentals(market: str, symbol: str, force_refresh: bool
     market_u = (market or "US").upper().strip()
     symbol_u = (symbol or "").upper().strip()
 
-    # Include refresh in key so refresh doesn't get "deduped" into non-refresh
     key = f"{market_u}:{symbol_u}:r{1 if force_refresh else 0}"
 
     is_leader, ev = _singleflight_begin(key)
@@ -595,22 +631,52 @@ def compute_and_cache_fundamentals(market: str, symbol: str, force_refresh: bool
 
     try:
         ttl = CACHE_TTL_DAYS_US if market_u == "US" else CACHE_TTL_DAYS_IN
-
         cached = get_cached_fundamentals(market_u, symbol_u)
 
-        # If we have cache and not forcing refresh and cache is fresh -> return instantly
         if cached and (not force_refresh) and (not _is_stale(cached.get("updated_at"), ttl)):
             resp = _format_response(cached)
             _singleflight_end(key, resp)
             return resp
 
-        # If Yahoo is blocked AND we have cached -> return cached (even if stale) to avoid hammering
+        # ✅ INDIA: use Screener, no Yahoo at all
+        if market_u == "IN":
+            sc = _screener_fetch_summary(symbol_u, force_refresh=force_refresh)
+
+            merged = {
+                "market": market_u,
+                "symbol": symbol_u,
+                "currency": sc.get("currency"),
+                "asof_date": None,
+                "updated_at": _now_iso(),
+                "source": "screener",
+                "market_cap": sc.get("market_cap"),
+                "pe": sc.get("pe"),
+                "pb": sc.get("pb"),
+                "revenue_ttm": None,
+                "net_income_ttm": None,
+                "fcf_ttm": None,
+                "debt_to_equity": None,
+                "roe": sc.get("roe"),
+            }
+
+            merged["raw_json"] = json.dumps(
+                {"debug": {"provider": "screener"}, "screener": sc.get("raw_screener", {})},
+                separators=(",", ":"),
+            )
+
+            upsert_fundamentals(market_u, symbol_u, merged)
+            final = get_cached_fundamentals(market_u, symbol_u) or merged
+            resp = _format_response(final)
+
+            _singleflight_end(key, resp)
+            return resp
+
+        # ✅ US: keep your exact current behavior
         if (not force_refresh) and cached and _yahoo_is_blocked():
             resp = _format_response(cached)
             _singleflight_end(key, resp)
             return resp
 
-        # SEC first for US (fast + stable)
         sec_data = {"sec_ok": False}
         if market_u == "US":
             try:
@@ -618,17 +684,11 @@ def compute_and_cache_fundamentals(market: str, symbol: str, force_refresh: bool
             except Exception:
                 sec_data = {"sec_ok": False}
 
-        # Yahoo: strict default (fast_info only). Allow `.info` only on refresh.
         allow_info = bool(force_refresh and YAHOO_ALLOW_INFO_ON_REFRESH_ONLY)
 
         yf_data: Dict[str, Any] = {}
         try:
-            # US: fast_info always; `.info` only on refresh
-            if market_u == "US":
-                yf_data = _yf_fetch_summary(symbol_u, allow_info=allow_info)
-            else:
-                # IN: NEVER call `.info` (only fast_info at most)
-                yf_data = _yf_fetch_summary(symbol_u, allow_info=False)
+            yf_data = _yf_fetch_summary(symbol_u, allow_info=allow_info)
         except Exception as e:
             yf_data = {"yf_error": repr(e), "raw_yf": {}}
 
@@ -638,7 +698,7 @@ def compute_and_cache_fundamentals(market: str, symbol: str, force_refresh: bool
             "currency": yf_data.get("currency"),
             "asof_date": sec_data.get("asof_date") or None,
             "updated_at": _now_iso(),
-            "source": _pick_source(sec_data, yf_data),
+            "source": _pick_source(market_u, sec_data, yf_data),
 
             "market_cap": yf_data.get("market_cap"),
             "pe": yf_data.get("pe"),

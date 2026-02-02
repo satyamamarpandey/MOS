@@ -9,3 +9,5 @@ ta
 python-dotenv
 boto3
 botocore
+beautifulsoup4==4.12.3
+requests==2.32.3

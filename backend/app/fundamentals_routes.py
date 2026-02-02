@@ -4,6 +4,7 @@ from .fundamentals import compute_and_cache_fundamentals
 
 router = APIRouter()
 
+
 @router.get("/fundamentals")
 def get_fundamentals(
     market: str = Query(..., description="US or IN"),
